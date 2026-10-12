@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { FlashcardDB } from './db'
 import { ensureInitialized } from './seed'
-import { createCard, createDeck, deleteDeck, loadDeckQueue, loadDeckSummaries, recordReview, updateCard } from './store'
+import { bulkCreateCards, createCard, createDeck, deleteDeck, loadDeckQueue, loadDeckSummaries, recordReview, updateCard } from './store'
 
 let database: FlashcardDB
 const NOW = new Date(2026, 4, 1, 9, 0).getTime()
@@ -64,5 +64,17 @@ describe('store', () => {
     expect(card.third).toBeUndefined()
     await updateCard(card.id, { front: '{{cloze}} kini', back: 'x' }, NOW + 1, database)
     expect((await database.cards.get(card.id))?.type).toBe('cloze')
+  })
+})
+
+describe('bulkCreateCards', () => {
+  it('menyimpan kartu + state, cloze terdeteksi, urutan terjaga', async () => {
+    const deck = await createDeck({ name: 'D', description: '', color: '#000', icon: '', theme: '', newPerDay: 20 }, NOW, database)
+    const n = await bulkCreateCards(deck.id, [{ front: 'a', back: 'b', third: '' }, { front: '{{c}} d', back: '' }], NOW, database)
+    expect(n).toBe(2)
+    const cards = await database.cards.where('deckId').equals(deck.id).sortBy('createdAt')
+    expect(cards.map((c) => c.type)).toEqual(['basic', 'cloze'])
+    expect(cards[0].third).toBeUndefined()
+    expect(await database.cardStates.count()).toBe(2)
   })
 })
