@@ -47,12 +47,16 @@ describe('backup', () => {
     database = new FlashcardDB(`backup-${crypto.randomUUID()}`)
     await createDeck(deckInput, 3000, database)
     await database.settings.put({ id: 'app', theme: 'dark', reminderTime: '07:00', notificationsEnabled: true })
+    const expected = file.data.decks.length + 1
     await restoreBackup(database, file, 'merge')
-    expect(await database.decks.count()).toBe(2)
+    expect(await database.decks.count()).toBe(expected)
     expect((await database.settings.get('app'))?.theme).toBe('dark')
+    // gambar ikut dipulihkan
+    const withImage = (await database.cards.toArray()).find((c) => c.backImage)
+    expect(withImage?.backImage?.type).toBe('image/svg+xml')
     // restore dua kali tidak menggandakan data
     await restoreBackup(database, file, 'merge')
-    expect(await database.decks.count()).toBe(2)
+    expect(await database.decks.count()).toBe(expected)
   })
 
   it('menolak file yang bukan backup', () => {
