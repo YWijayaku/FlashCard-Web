@@ -28,7 +28,7 @@ export function App() {
   if (!ready) return null
 
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, '')}>
       <Routes>
         <Route path="/decks/:deckId/study" element={<StudyPage />} />
         <Route element={<AppShell />}>

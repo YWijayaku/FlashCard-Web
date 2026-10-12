@@ -4,7 +4,11 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
+// Untuk GitHub Pages: BASE_PATH=/FlashCard-Web/ (lihat .github/workflows/pages.yml)
+const base = process.env.BASE_PATH ?? '/'
+
 export default defineConfig({
+  base,
   plugins: [
     react(),
     VitePWA({
@@ -15,8 +19,8 @@ export default defineConfig({
         short_name: 'Flashcard',
         description: 'Belajar dengan flashcard dan spaced repetition, offline.',
         lang: 'id',
-        start_url: '/',
-        scope: '/',
+        start_url: '.',
+        scope: '.',
         display: 'standalone',
         orientation: 'portrait',
         background_color: '#ffffff',
@@ -29,7 +33,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,webmanifest}'],
-        navigateFallback: '/index.html',
+        navigateFallback: 'index.html',
       },
     }),
   ],
