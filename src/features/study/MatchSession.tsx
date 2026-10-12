@@ -107,7 +107,8 @@ export function MatchSessionView({ deck, cards, question, answer, onExit, onRema
               aria-pressed={selected}
               onClick={() => setState((s) => tapTile(s, t.key))}
               className={cn(
-                'flex min-h-20 items-center justify-center break-words rounded-lg border bg-card p-2 text-center text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-base',
+                'flex min-h-20 items-center justify-center break-words rounded-lg border-2 bg-card p-2 text-center font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                t.text.length <= 3 ? 'text-3xl' : 'text-sm sm:text-base',
                 selected && 'border-primary bg-primary/10',
                 wrong && 'border-red-600 bg-red-600/10',
                 matched && 'invisible',

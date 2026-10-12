@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Check, X } from 'lucide-react'
 import { CardSide } from '@/components/CardSide'
 import { cn } from '@/lib/utils'
 import type { Card } from '@/types'
 import { ChoiceResult } from './ChoiceResult'
 import type { SessionViewProps } from './FlipSession'
-import { buildMcq } from './mcq'
+import { buildMcq, distractorPool } from './mcq'
 import { SessionBody, SessionGate } from './SessionLayout'
 import { isTextInputTarget, resolveChoiceKey } from './shortcuts'
 import { answerLabel, hasSideContent, questionView } from './sides'
@@ -26,12 +27,11 @@ export function McqSessionView({ deck, cards, question, answer, reverse, onExit,
 
   useEffect(() => onRemainingChange(remaining), [remaining, onRemainingChange])
 
-  const pool = useMemo(() => cards.map(label), [cards, label])
   // Opsi dibuat ulang untuk setiap kartu yang tampil (termasuk kartu yang diulang).
   const mcq = useMemo(
-    () => (current ? buildMcq(label(current), pool) : undefined),
+    () => (current ? buildMcq(label(current), distractorPool(current, cards, label)) : undefined),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [current?.id, studied, pool, label],
+    [current?.id, studied, cards, label],
   )
 
   const choose = useCallback(
@@ -93,12 +93,14 @@ export function McqSessionView({ deck, cards, question, answer, reverse, onExit,
                     className={cn(
                       'flex min-h-14 items-center gap-3 rounded-lg border bg-card px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default',
                       state === 'idle' && 'hover:bg-accent',
-                      state === 'correct' && 'border-emerald-600 bg-emerald-600/10',
-                      state === 'wrong' && 'border-red-600 bg-red-600/10',
+                      state === 'correct' && 'border-2 border-emerald-600 bg-emerald-600/15 font-semibold',
+                      state === 'wrong' && 'border-2 border-red-600 bg-red-600/15',
                     )}
                   >
                     <kbd className="flex h-7 w-7 shrink-0 items-center justify-center rounded border text-xs text-muted-foreground">{i + 1}</kbd>
-                    <span className="min-w-0 break-words">{opt}</span>
+                    <span className={cn('min-w-0 flex-1 break-words', opt.length <= 3 ? 'text-2xl' : 'text-base')}>{opt}</span>
+                    {state === 'correct' && <Check className="h-5 w-5 shrink-0 text-emerald-600" aria-label="Benar" />}
+                    {state === 'wrong' && <X className="h-5 w-5 shrink-0 text-red-600" aria-label="Salah" />}
                   </button>
                 )
               })}

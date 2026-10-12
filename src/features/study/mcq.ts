@@ -23,3 +23,19 @@ export function buildMcq(correct: string, pool: readonly string[], rng: Rng = Ma
   const options = shuffle([correct, ...distractors], rng)
   return { options, correctIndex: options.indexOf(correct) }
 }
+
+/**
+ * Pool distraktor: utamakan kartu bertipe sama (basic ↔ basic, cloze ↔ cloze) agar
+ * opsi tidak mudah ditebak dari bentuknya; tambah dari tipe lain jika kurang dari 3.
+ */
+export function distractorPool<T extends { id: string; type: string }>(
+  current: T,
+  cards: readonly T[],
+  label: (card: T) => string,
+): string[] {
+  const others = cards.filter((c) => c.id !== current.id)
+  const same = others.filter((c) => c.type === current.type).map(label)
+  const distinct = new Set(same.map(normalizeAnswer).filter(Boolean))
+  if (distinct.size >= MCQ_OPTIONS - 1) return same
+  return [...same, ...others.filter((c) => c.type !== current.type).map(label)]
+}

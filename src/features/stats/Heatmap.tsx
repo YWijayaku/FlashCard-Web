@@ -11,7 +11,7 @@ const label = (c: HeatCell) =>
 /** Heatmap aktivitas 12 minggu (kolom = minggu, baris = Senin–Minggu). */
 export function Heatmap({ weeks }: { weeks: HeatCell[][] }) {
   return (
-    <figure className="space-y-2">
+    <figure className="max-w-sm space-y-2">
       <div className="flex gap-1.5">
         <div className="grid grid-rows-7 gap-1 text-[10px] leading-none text-muted-foreground" aria-hidden>
           {DAYS.map((d, i) => (

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { seededRng, shuffle } from '@/lib/random'
-import { buildMcq } from './mcq'
+import { buildMcq, distractorPool } from './mcq'
 import { modeUnavailableReason } from './modes'
 import { formatElapsed, initialMatchState, isMatchComplete, makeTiles, pickPairs, tapTile } from './match'
 
@@ -59,5 +59,18 @@ describe('modeUnavailableReason', () => {
     expect(modeUnavailableReason('mcq', 4)).toBeNull()
     expect(modeUnavailableReason('match', 3)).toBeNull()
     expect(modeUnavailableReason('flip', 0)).not.toBeNull()
+  })
+})
+
+describe('distractorPool', () => {
+  const c = (id: string, type: string) => ({ id, type, text: id })
+  const label = (x: { text: string }) => x.text
+  it('mengutamakan tipe kartu yang sama', () => {
+    const cards = [c('a', 'basic'), c('b', 'basic'), c('d', 'basic'), c('e', 'basic'), c('z', 'cloze')]
+    expect(distractorPool(cards[0], cards, label)).toEqual(['b', 'd', 'e'])
+  })
+  it('menambah dari tipe lain jika kurang', () => {
+    const cards = [c('z', 'cloze'), c('y', 'cloze'), c('a', 'basic'), c('b', 'basic')]
+    expect(distractorPool(cards[0], cards, label)).toEqual(['y', 'a', 'b'])
   })
 })
