@@ -4,16 +4,38 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { FlipSessionView } from '@/features/study/FlipSession'
-import { StudySetup } from '@/features/study/StudySetup'
+import { MatchSessionView } from '@/features/study/MatchSession'
+import { McqSessionView } from '@/features/study/McqSession'
+import { MODE_LABELS } from '@/features/study/modes'
+import { StudySetup, type StudyChoice } from '@/features/study/StudySetup'
+import { TypingSessionView } from '@/features/study/TypingSession'
 import { availableSides } from '@/features/study/sides'
 import { db } from '@/lib/db'
 import { deckThemeStyle } from '@/lib/themes'
-import type { CardSide, Deck } from '@/types'
+import type { Card, Deck } from '@/types'
 
-interface Started {
+interface Started extends StudyChoice {
   deck: Deck
-  question: CardSide
-  answer: CardSide
+  cards: Card[]
+}
+
+const PREF_KEY = 'study-choice:'
+
+function loadChoice(deckId: string): Partial<StudyChoice> | undefined {
+  try {
+    const raw = localStorage.getItem(PREF_KEY + deckId)
+    return raw ? (JSON.parse(raw) as Partial<StudyChoice>) : undefined
+  } catch {
+    return undefined
+  }
+}
+
+function saveChoice(deckId: string, choice: StudyChoice): void {
+  try {
+    localStorage.setItem(PREF_KEY + deckId, JSON.stringify(choice))
+  } catch {
+    // penyimpanan tidak tersedia; abaikan
+  }
 }
 
 export default function StudyPage() {
@@ -48,30 +70,47 @@ export default function StudyPage() {
     )
   }
 
+  const props = started && {
+    deck: started.deck,
+    cards: started.cards,
+    question: started.question,
+    answer: started.answer,
+    onExit: exit,
+    onRemainingChange: setRemaining,
+  }
+
   return (
     <div className="flex h-dvh flex-col bg-background pt-safe" style={deckThemeStyle(deck.theme)}>
       <header className="flex items-center gap-2 border-b px-2 py-1">
         <Button variant="ghost" size="icon" aria-label="Keluar sesi (Esc)" onClick={exit}>
           <X aria-hidden />
         </Button>
-        <h1 className="min-w-0 flex-1 truncate font-semibold">{deck.name}</h1>
+        <div className="min-w-0 flex-1">
+          <h1 className="truncate font-semibold leading-tight">{deck.name}</h1>
+          {started && <p className="text-xs text-muted-foreground">{MODE_LABELS[started.mode]}</p>}
+        </div>
         {started && remaining !== undefined && (
           <span className="px-3 text-sm text-muted-foreground" aria-live="polite">
-            {remaining} tersisa
+            {remaining} {started.mode === 'match' ? 'pasang' : 'tersisa'}
           </span>
         )}
       </header>
-      {started ? (
-        <FlipSessionView
-          deck={started.deck}
-          question={started.question}
-          answer={started.answer}
-          onExit={exit}
-          onRemainingChange={setRemaining}
-        />
-      ) : (
-        <div className="flex flex-1 items-center overflow-y-auto p-4">
-          <StudySetup sides={availableSides(cards)} onStart={(question, answer) => setStarted({ deck, question, answer })} />
+      {props && started.mode === 'flip' && <FlipSessionView {...props} />}
+      {props && started.mode === 'mcq' && <McqSessionView {...props} />}
+      {props && started.mode === 'mcq-reverse' && <McqSessionView {...props} reverse />}
+      {props && started.mode === 'typing' && <TypingSessionView {...props} />}
+      {props && started.mode === 'match' && <MatchSessionView {...props} />}
+      {!started && (
+        <div className="flex flex-1 items-start overflow-y-auto p-4 sm:items-center">
+          <StudySetup
+            sides={availableSides(cards)}
+            cardCount={cards.length}
+            initial={loadChoice(deck.id)}
+            onStart={(choice) => {
+              saveChoice(deck.id, choice)
+              setStarted({ ...choice, deck, cards })
+            }}
+          />
         </div>
       )}
     </div>

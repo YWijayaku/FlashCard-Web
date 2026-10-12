@@ -2,34 +2,38 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { loadDeckQueue, recordReview, startSession, updateSession } from '@/lib/store'
 import { queueOrder, shouldRequeue } from '@/lib/queue'
 import { createInitialState } from '@/lib/srs'
-import type { Card, CardSide, CardState, Deck, RatingValue } from '@/types'
-import { hasSideContent } from './sides'
+import type { Card, CardState, Deck, RatingValue, StudyMode } from '@/types'
 
-export type FlipStatus = 'loading' | 'empty' | 'studying' | 'done'
+export type StudyStatus = 'loading' | 'empty' | 'studying' | 'done'
 
-export interface FlipSession {
-  status: FlipStatus
+export interface StudyQueue {
+  status: StudyStatus
   current: Card | undefined
   currentState: CardState | undefined
   remaining: number
-  revealed: boolean
   studied: number
   correct: number
-  flip: () => void
-  rate: (rating: RatingValue) => Promise<void>
+  /** Waktu kartu saat ini mulai ditampilkan. */
+  shownAt: number
+  /** Simpan penilaian kartu saat ini lalu lanjut ke kartu berikutnya. */
+  rate: (rating: RatingValue, durationMs?: number) => Promise<void>
 }
 
-export function useFlipSession(deck: Deck, question: CardSide): FlipSession {
-  const [status, setStatus] = useState<FlipStatus>('loading')
+/**
+ * Antrian sesi belajar yang memperbarui SRS (Flip, Pilihan Ganda, Typing).
+ * `filter` menyaring kartu yang bisa dipakai pada mode tersebut.
+ */
+export function useStudyQueue(deck: Deck, mode: StudyMode, filter: (card: Card) => boolean): StudyQueue {
+  const [status, setStatus] = useState<StudyStatus>('loading')
   const [queue, setQueue] = useState<Card[]>([])
   const [states, setStates] = useState<Map<string, CardState>>(new Map())
-  const [revealed, setRevealed] = useState(false)
   const [studied, setStudied] = useState(0)
   const [correct, setCorrect] = useState(0)
-  const shownAt = useRef(Date.now())
+  const [shownAt, setShownAt] = useState(() => Date.now())
   const sessionId = useRef<string>()
   const busy = useRef(false)
   const progress = useRef({ studied: 0, correct: 0, ended: false })
+  const filterRef = useRef(filter)
 
   // Tutup sesi (endedAt) saat keluar di tengah jalan.
   useEffect(
@@ -46,30 +50,28 @@ export function useFlipSession(deck: Deck, question: CardSide): FlipSession {
     let cancelled = false
     void loadDeckQueue(deck, Date.now()).then((q) => {
       if (cancelled) return
-      const cards = queueOrder(q).filter((c) => hasSideContent(c, question))
+      const cards = queueOrder(q).filter(filterRef.current)
       setQueue(cards)
       setStates(q.states)
       setStatus(cards.length > 0 ? 'studying' : 'empty')
-      shownAt.current = Date.now()
+      setShownAt(Date.now())
     })
     return () => {
       cancelled = true
     }
-  }, [deck, question])
+  }, [deck])
 
   const current = queue[0]
 
-  const flip = useCallback(() => setRevealed((r) => !r), [])
-
   const rate = useCallback(
-    async (rating: RatingValue) => {
-      if (!current || !revealed || busy.current) return
+    async (rating: RatingValue, durationMs?: number) => {
+      if (!current || busy.current) return
       busy.current = true
       try {
         const now = Date.now()
         const prev = states.get(current.id) ?? createInitialState(current.id, now)
-        const next = await recordReview({ card: current, state: prev, rating, mode: 'flip', durationMs: now - shownAt.current, now })
-        if (!sessionId.current) sessionId.current = (await startSession(deck.id, 'flip')).id
+        const next = await recordReview({ card: current, state: prev, rating, mode, durationMs: durationMs ?? now - shownAt, now })
+        if (!sessionId.current) sessionId.current = (await startSession(deck.id, mode)).id
         const nextStudied = studied + 1
         const nextCorrect = correct + (rating >= 3 ? 1 : 0)
         const rest = queue.slice(1)
@@ -85,14 +87,13 @@ export function useFlipSession(deck: Deck, question: CardSide): FlipSession {
         setQueue(nextQueue)
         setStudied(nextStudied)
         setCorrect(nextCorrect)
-        setRevealed(false)
         if (done) setStatus('done')
-        shownAt.current = Date.now()
+        setShownAt(Date.now())
       } finally {
         busy.current = false
       }
     },
-    [current, revealed, states, deck.id, studied, correct, queue],
+    [current, states, mode, shownAt, deck.id, studied, correct, queue],
   )
 
   return {
@@ -100,10 +101,9 @@ export function useFlipSession(deck: Deck, question: CardSide): FlipSession {
     current,
     currentState: current ? states.get(current.id) : undefined,
     remaining: queue.length,
-    revealed,
     studied,
     correct,
-    flip,
+    shownAt,
     rate,
   }
 }

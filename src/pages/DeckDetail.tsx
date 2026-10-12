@@ -41,6 +41,7 @@ export default function DeckDetailPage() {
   }
 
   const studyCount = queue ? queue.due.length + queue.fresh.length : 0
+  const hasCards = (cards?.length ?? 0) > 0
 
   return (
     <div style={deckThemeStyle(deck.theme)}>
@@ -56,14 +57,14 @@ export default function DeckDetailPage() {
       </header>
 
       <div className="mb-6 flex flex-wrap gap-2">
-        <Button asChild={studyCount > 0} disabled={studyCount === 0} size="lg" className="flex-1 sm:flex-none">
-          {studyCount > 0 ? (
+        <Button asChild={hasCards} disabled={!hasCards} size="lg" className="flex-1 sm:flex-none">
+          {hasCards ? (
             <Link to={`/decks/${deck.id}/study`}>
               <Play aria-hidden />
-              Mulai belajar ({studyCount})
+              {studyCount > 0 ? `Mulai belajar (${studyCount})` : 'Belajar / Match'}
             </Link>
           ) : (
-            <span>Tidak ada kartu untuk hari ini</span>
+            <span>Belum ada kartu</span>
           )}
         </Button>
         <Button variant="outline" onClick={() => setEditingDeck(true)}>

@@ -35,3 +35,22 @@ export function resolveFlipKey(e: KeyLike, ctx: { revealed: boolean; inTextInput
   }
   return null
 }
+
+export type ChoiceAction = { type: 'choose'; index: number } | { type: 'next' } | { type: 'exit' }
+
+/**
+ * Peta tombol Pilihan Ganda: 1–4 = pilih opsi (sebelum menjawab),
+ * Spasi/Enter = lanjut (setelah menjawab), Esc = keluar.
+ */
+export function resolveChoiceKey(
+  e: KeyLike,
+  ctx: { answered: boolean; optionCount: number; inTextInput: boolean },
+): ChoiceAction | null {
+  if (ctx.inTextInput || e.ctrlKey || e.metaKey || e.altKey) return null
+  if (e.key === 'Escape') return { type: 'exit' }
+  if (e.repeat) return null
+  if (ctx.answered) return e.key === ' ' || e.key === 'Enter' ? { type: 'next' } : null
+  const n = Number(e.key)
+  if (Number.isInteger(n) && n >= 1 && n <= Math.min(4, ctx.optionCount)) return { type: 'choose', index: n - 1 }
+  return null
+}

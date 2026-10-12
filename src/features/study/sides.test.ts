@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Card } from '@/types'
-import { answerViews, availableSides, hasSideContent, questionView } from './sides'
+import { answerLabel, answerViews, availableSides, expectedAnswers, hasSideContent, questionView } from './sides'
 
 function card(partial: Partial<Card>): Card {
   return { id: 'c', deckId: 'd', front: 'F', back: 'B', type: 'basic', createdAt: 0, updatedAt: 0, ...partial }
@@ -37,5 +37,19 @@ describe('sides', () => {
     const c = card({ type: 'cloze', front: '{{A}}', back: 'B' })
     expect(questionView(c, 'back').cloze).toBeUndefined()
     expect(answerViews(c, 'back', 'front')).toEqual([{ text: '{{A}}', image: undefined, cloze: 'revealed' }])
+  })
+})
+
+describe('expectedAnswers', () => {
+  it('kartu basic memakai teks sisi jawaban', () => {
+    const c = card({ third: ' みず ' })
+    expect(expectedAnswers(c, 'front', 'third')).toEqual(['みず'])
+    expect(expectedAnswers(card({ back: '' }), 'front', 'back')).toEqual([])
+  })
+  it('cloze dari depan memakai isi cloze; dari sisi lain memakai depan terbuka', () => {
+    const c = card({ type: 'cloze', front: '{{A}} dan {{B}}', back: 'x' })
+    expect(expectedAnswers(c, 'front', 'back')).toEqual(['A', 'B'])
+    expect(answerLabel(c, 'front', 'back')).toBe('A, B')
+    expect(expectedAnswers(c, 'back', 'front')).toEqual(['A dan B'])
   })
 })
