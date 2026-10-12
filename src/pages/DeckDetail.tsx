@@ -78,7 +78,12 @@ export default function DeckDetailPage() {
       </div>
 
       <div className="mb-3 flex items-center justify-between gap-2">
-        <h2 className="text-lg font-semibold">Kartu</h2>
+        <h2 className="text-lg font-semibold">
+          Kartu{' '}
+          <Link to={`/browser?deck=${deck.id}`} className="ml-2 text-sm font-normal text-primary underline-offset-4 hover:underline">
+            Cari
+          </Link>
+        </h2>
         <Button onClick={() => setCardForm({ open: true })}>
           <Plus aria-hidden />
           Tambah kartu

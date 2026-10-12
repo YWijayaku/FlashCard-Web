@@ -1,4 +1,4 @@
-import { ChartColumn, House, Layers, Settings, type LucideIcon } from 'lucide-react'
+import { ChartColumn, FileUp, House, Layers, Search, Settings, type LucideIcon } from 'lucide-react'
 
 export interface NavItem {
   to: string
@@ -12,4 +12,10 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { to: '/decks', label: 'Deck', icon: Layers },
   { to: '/stats', label: 'Statistik', icon: ChartColumn },
   { to: '/settings', label: 'Pengaturan', icon: Settings },
+]
+
+/** Tautan tambahan di sidebar desktop (di HP tersedia dari halaman Deck). */
+export const SECONDARY_NAV: readonly NavItem[] = [
+  { to: '/browser', label: 'Card Browser', icon: Search },
+  { to: '/import', label: 'Import', icon: FileUp },
 ]
