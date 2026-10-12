@@ -3,7 +3,7 @@
  * kutip ganda yang di-escape (""), CRLF, dan BOM.
  */
 export function parseCsv(text: string): string[][] {
-  const src = text.replace(/^﻿/, '')
+  const src = text.replace(/^\uFEFF/, '')
   const rows: string[][] = []
   let row: string[] = []
   let field = ''
