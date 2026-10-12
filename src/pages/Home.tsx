@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { Play, Plus } from 'lucide-react'
 import { DeckBadge } from '@/components/DeckBadge'
 import { PageHeader } from '@/components/PageHeader'
+import { ReminderBanner } from '@/components/ReminderBanner'
 import { Button } from '@/components/ui/button'
 import { useDeckSummaries } from '@/hooks/useDeckSummaries'
 
@@ -13,6 +14,7 @@ export default function HomePage() {
   return (
     <>
       <PageHeader title="Beranda" description="Kartu yang perlu dipelajari hari ini." />
+      <ReminderBanner pendingCount={totalDue + totalNew} />
 
       <section aria-label="Ringkasan hari ini" className="mb-6 grid grid-cols-2 gap-3">
         <div className="rounded-lg border bg-card p-4">

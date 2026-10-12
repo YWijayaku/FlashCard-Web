@@ -1,20 +1,32 @@
 import { useEffect } from 'react'
-import { useLiveQuery } from 'dexie-react-hooks'
-import { db } from '@/lib/db'
-import type { ThemeMode } from '@/types'
+import { useSettings } from '@/lib/settings'
+import { THEME_PRESETS } from '@/lib/themes'
 
-/** Terapkan kelas `dark` pada <html> sesuai pengaturan (default ikut sistem). */
+/** Terapkan kelas `dark` (default ikut sistem) dan preset warna aplikasi pada <html>. */
 export function useApplyTheme(): void {
-  const mode: ThemeMode = useLiveQuery(() => db.settings.get('app'), [])?.theme ?? 'system'
+  const { theme: mode, accent } = useSettings()
 
   useEffect(() => {
     const media = window.matchMedia('(prefers-color-scheme: dark)')
     const apply = () => {
       const dark = mode === 'dark' || (mode === 'system' && media.matches)
       document.documentElement.classList.toggle('dark', dark)
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#0b1120' : '#4f46e5')
     }
     apply()
     media.addEventListener('change', apply)
     return () => media.removeEventListener('change', apply)
   }, [mode])
+
+  useEffect(() => {
+    const preset = THEME_PRESETS.find((t) => t.id === accent)
+    const style = document.documentElement.style
+    if (preset) {
+      style.setProperty('--primary', preset.primary)
+      style.setProperty('--ring', preset.primary)
+    } else {
+      style.removeProperty('--primary')
+      style.removeProperty('--ring')
+    }
+  }, [accent])
 }

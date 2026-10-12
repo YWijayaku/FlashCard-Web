@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { useReminderCheck } from '@/hooks/useReminder'
 import { useApplyTheme } from '@/hooks/useTheme'
 import { ensureInitialized } from '@/lib/seed'
 import BrowserPage from '@/pages/Browser'
@@ -26,6 +27,11 @@ export function App() {
 
   if (error) return <p className="p-6 text-center text-destructive">{error}</p>
   if (!ready) return null
+  return <Ready />
+}
+
+function Ready() {
+  useReminderCheck()
 
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, '')}>
