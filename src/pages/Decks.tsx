@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Plus } from 'lucide-react'
+import { FileUp, Plus, Search } from 'lucide-react'
 import { DeckBadge } from '@/components/DeckBadge'
 import { DeckForm } from '@/components/DeckForm'
 import { PageHeader } from '@/components/PageHeader'
@@ -17,10 +17,24 @@ export default function DecksPage() {
       <PageHeader
         title="Deck"
         actions={
-          <Button onClick={() => setCreating(true)}>
-            <Plus aria-hidden />
-            Deck baru
-          </Button>
+          <>
+            <Button variant="outline" asChild>
+              <Link to="/browser">
+                <Search aria-hidden />
+                Cari kartu
+              </Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link to="/import">
+                <FileUp aria-hidden />
+                Import
+              </Link>
+            </Button>
+            <Button onClick={() => setCreating(true)}>
+              <Plus aria-hidden />
+              Deck baru
+            </Button>
+          </>
         }
       />
       {summaries?.length === 0 && (

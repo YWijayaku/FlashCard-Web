@@ -1,4 +1,5 @@
 import type { Card, CardSide } from '@/types'
+import { clozeAnswers, revealCloze } from '@/lib/cloze'
 
 export const SIDE_LABELS: Record<CardSide, string> = {
   front: 'Depan',
@@ -48,4 +49,24 @@ export function answerViews(card: Card, question: CardSide, answer: CardSide): S
     return views
   }
   return [rawSide(card, answer)]
+}
+
+/** Teks polos sebuah sisi (cloze dibuka). */
+export function sideText(card: Card, side: CardSide): string {
+  const { text } = rawSide(card, side)
+  return card.type === 'cloze' && side === 'front' ? revealCloze(text) : text.trim()
+}
+
+/**
+ * Jawaban yang diharapkan untuk mode PG/Typing/Match.
+ * Kartu cloze yang ditanya dari depan → isi cloze-nya; selain itu → teks sisi jawaban.
+ */
+export function expectedAnswers(card: Card, question: CardSide, answer: CardSide): string[] {
+  if (card.type === 'cloze' && question === 'front') return clozeAnswers(card.front)
+  const text = sideText(card, answer)
+  return text ? [text] : []
+}
+
+export function answerLabel(card: Card, question: CardSide, answer: CardSide): string {
+  return expectedAnswers(card, question, answer).join(', ')
 }

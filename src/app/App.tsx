@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { useReminderCheck } from '@/hooks/useReminder'
 import { useApplyTheme } from '@/hooks/useTheme'
 import { ensureInitialized } from '@/lib/seed'
 import BrowserPage from '@/pages/Browser'
@@ -9,9 +10,11 @@ import HomePage from '@/pages/Home'
 import ImportPage from '@/pages/Import'
 import NotFoundPage from '@/pages/NotFound'
 import SettingsPage from '@/pages/Settings'
-import StatsPage from '@/pages/Stats'
 import StudyPage from '@/pages/Study'
 import { AppShell } from './AppShell'
+
+// Recharts cukup besar; dimuat hanya saat halaman Statistik dibuka.
+const StatsPage = lazy(() => import('@/pages/Stats'))
 
 export function App() {
   const [ready, setReady] = useState(false)
@@ -26,9 +29,14 @@ export function App() {
 
   if (error) return <p className="p-6 text-center text-destructive">{error}</p>
   if (!ready) return null
+  return <Ready />
+}
+
+function Ready() {
+  useReminderCheck()
 
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, '')}>
       <Routes>
         <Route path="/decks/:deckId/study" element={<StudyPage />} />
         <Route element={<AppShell />}>
@@ -36,7 +44,14 @@ export function App() {
           <Route path="decks" element={<DecksPage />} />
           <Route path="decks/:deckId" element={<DeckDetailPage />} />
           <Route path="browser" element={<BrowserPage />} />
-          <Route path="stats" element={<StatsPage />} />
+          <Route
+            path="stats"
+            element={
+              <Suspense fallback={null}>
+                <StatsPage />
+              </Suspense>
+            }
+          />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="import" element={<ImportPage />} />
           <Route path="*" element={<NotFoundPage />} />

@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/lib/db'
 import { cn } from '@/lib/utils'
-import { NAV_ITEMS } from './nav'
+import { NAV_ITEMS, SECONDARY_NAV } from './nav'
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
   cn(
@@ -18,7 +18,7 @@ export function Sidebar() {
       <div className="px-5 py-4 text-lg font-bold">Flashcard</div>
       <nav aria-label="Navigasi utama" className="px-2">
         <ul className="space-y-1">
-          {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
+          {[...NAV_ITEMS, ...SECONDARY_NAV].map(({ to, label, icon: Icon, end }) => (
             <li key={to}>
               <NavLink to={to} end={end} className={linkClass}>
                 <Icon className="h-4 w-4" aria-hidden />

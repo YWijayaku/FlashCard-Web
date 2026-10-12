@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isTextInputTarget, resolveFlipKey } from './shortcuts'
+import { isTextInputTarget, resolveChoiceKey, resolveFlipKey } from './shortcuts'
 
 const idle = { revealed: false, inTextInput: false }
 const shown = { revealed: true, inTextInput: false }
@@ -38,5 +38,20 @@ describe('isTextInputTarget', () => {
     expect(isTextInputTarget(checkbox)).toBe(false)
     expect(isTextInputTarget(document.createElement('button'))).toBe(false)
     expect(isTextInputTarget(null)).toBe(false)
+  })
+})
+
+describe('resolveChoiceKey', () => {
+  const base = { answered: false, optionCount: 4, inTextInput: false }
+  it('1–4 memilih opsi sebelum menjawab', () => {
+    expect(resolveChoiceKey({ key: '2' }, base)).toEqual({ type: 'choose', index: 1 })
+    expect(resolveChoiceKey({ key: '4' }, { ...base, optionCount: 3 })).toBeNull()
+    expect(resolveChoiceKey({ key: ' ' }, base)).toBeNull()
+  })
+  it('Spasi/Enter lanjut setelah menjawab, Esc keluar', () => {
+    expect(resolveChoiceKey({ key: 'Enter' }, { ...base, answered: true })).toEqual({ type: 'next' })
+    expect(resolveChoiceKey({ key: '1' }, { ...base, answered: true })).toBeNull()
+    expect(resolveChoiceKey({ key: 'Escape' }, base)).toEqual({ type: 'exit' })
+    expect(resolveChoiceKey({ key: '1' }, { ...base, inTextInput: true })).toBeNull()
   })
 })

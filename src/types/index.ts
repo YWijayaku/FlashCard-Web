@@ -76,6 +76,11 @@ export interface Session {
 export interface Settings {
   id: 'app'
   theme: ThemeMode
+  /** Jam pengingat harian "HH:mm" (zona waktu lokal). */
   reminderTime: string
   notificationsEnabled: boolean
+  /** Preset warna aplikasi (id dari THEME_PRESETS); kosong = default. */
+  accent?: string
+  /** Deck contoh yang sudah pernah ditambahkan (agar tidak dibuat ulang). */
+  seededExamples?: string[]
 }

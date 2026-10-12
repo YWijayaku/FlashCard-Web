@@ -166,3 +166,21 @@ export async function updateSession(
 ): Promise<void> {
   await database.sessions.update(id, patch)
 }
+
+/** Tambah banyak kartu sekaligus (Import). Mengembalikan jumlah kartu yang disimpan. */
+export async function bulkCreateCards(
+  deckId: string,
+  inputs: readonly Pick<Card, 'front' | 'back' | 'third'>[],
+  now: Timestamp = Date.now(),
+  database: FlashcardDB = db,
+): Promise<number> {
+  const cards: Card[] = inputs.map((input, i) => {
+    const data = normalizeCard(input)
+    return { id: newId(), deckId, ...data, type: detectCardType(data.front), createdAt: now + i, updatedAt: now + i }
+  })
+  await database.transaction('rw', database.cards, database.cardStates, async () => {
+    await database.cards.bulkAdd(cards)
+    await database.cardStates.bulkAdd(cards.map((c) => createInitialState(c.id, now)))
+  })
+  return cards.length
+}
